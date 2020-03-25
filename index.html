@@ -2,28 +2,26 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
+<link rel="icon" href="favicon.ico" />
 <style>
-body { font-family: sans-serif; padding: 1em; }
+body { font-family: Calibri; padding: 1em; }
 #log { margin: 1em 0; padding: 1em; border: 1px solid black; display: inline-block; }
 </style>
 <script src="script.js"></script>
 </head>
 <body onLoad="init()">
 
-<h1>Test / <span id="scriptversion"></span></h1>
+<h1>Offline Test</h1>
 
 <p><input type="button" value="update" onclick="tryUpdate()" />
-<input type="button" value="cache update" onclick="sendMessage('cache-update')" />
+<input type="button" value="cache update" onclick="sendMessageToSW('cache-update')" />
 <input type="button" value="status" onclick="askStatus()" />
-<input type="button" value="clear everything" onclick="sendMessage('reset')" />
-<input type="button" value="fix" onclick="sendMessage('fix')" />
+<input type="button" value="clear everything" onclick="sendMessageToSW('reset')" />
+<input type="button" value="fix" onclick="sendMessageToSW('fix')" />
 
-<div id="log"></div>
+<div id="status"></div>
 
 <div id="cache"></div>
-
-<p><img src="img/memo_logo.jpg" width="200px" /></p>
 
 </body>
 <html>
