@@ -4,9 +4,26 @@ const orangeDot = '<span style="color:orange">&#x2b24;</span>'; //"&#128992;";
 const greenDot = '<span style="color:green">&#x2b24;</span>'; //"&#128994;";
 
 function get (id) { return document.getElementById(id); }
+
+
+function sendMessageToSW (msg, callback)
+{
+	if(!navigator.serviceWorker.controller) return console.log("no service !");
+	let p = new Promise(function(resolve, reject)
+	{
+		let messageChannel = new MessageChannel();
+		messageChannel.port1.onmessage = function(event)
+		{
+			if (event.data.error) reject(event.data.error);
+			else resolve(event.data);
+		};
+		navigator.serviceWorker.controller.postMessage(msg, [messageChannel.port2]);
+	});
+	p.then(response => { if(callback) callback(response); else console.log(response); });
+}
+
 function init ()
 {
-	get('scriptversion').innerHTML = version;
 	// register SW
 	navigator.serviceWorker.register('service-worker.js').then(
 		reg => 
@@ -49,31 +66,14 @@ function tryUpdate ()
 
 function askStatus ()
 {
-	if(!navigator.serviceWorker.controller) return get('log').innerHTML = "<b>no service !</b>";
-	sendMessage ("status", function(response)
+	if(!navigator.serviceWorker.controller) return get('status').innerHTML = "<b>no service !</b>";
+	sendMessageToSW("status", function(response)
 	{
 		let txt = "<p>Version : "+response.version;
 		txt += "<p>Cache size : "+(response.size ? (Math.round(response.size/1024)+" ko") : "unknown");
 		txt += "<p>Integrity : "+(response.integrity?greenDot:redDot);
 		//txt += "<p>Database : <br>"+response.database.map(x => x.path).join('<br>');
 		//txt += "<p>Cache : <br>"+response.cache.join('<br>');
-		get('log').innerHTML = txt;
+		get('status').innerHTML = txt;
 	});
-}
-
-
-function sendMessage (msg, callback)
-{
-	if(!navigator.serviceWorker.controller) return console.log("no service !");
-	let p = new Promise(function(resolve, reject)
-	{
-		let messageChannel = new MessageChannel();
-		messageChannel.port1.onmessage = function(event)
-		{
-			if (event.data.error) reject(event.data.error);
-			else resolve(event.data);
-		};
-		navigator.serviceWorker.controller.postMessage(msg, [messageChannel.port2]);
-	});
-	p.then(response => { if(callback) callback(response); else console.log(response); });
 }

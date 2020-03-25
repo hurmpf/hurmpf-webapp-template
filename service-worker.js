@@ -324,7 +324,7 @@ async function resetDatabaseAndCache ()
 {
 	await dbClear("files");
 	await dbClear("infos");
-	await indexedDB.deleteDatabase(DATABASE);
+	await indexedDB.deleteDatabase(DBNAME);
 	await cacheClear();
 	log("database and cache cleared !");
 }
