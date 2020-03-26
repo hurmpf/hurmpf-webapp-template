@@ -7,7 +7,7 @@
 body { font-family: Calibri; padding: 1em; }
 #status { margin: 1em 0; padding: 1em; border: 1px solid black; display: inline-block; }
 </style>
-<?php if(!isset($_GET['appcache']) && isset($_GET['nocache']))
+<?php if(!isset($_GET['appcache']) && !isset($_GET['nocache']))
 	// add service worker script
 	echo '<script src="script.js"></script>'."\n";
 ?>
