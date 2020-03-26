@@ -2,9 +2,10 @@ const version = "8";
 const redDot = '<span style="color:red">&#x2b24;</span>'; //"&#128308;";
 const orangeDot = '<span style="color:orange">&#x2b24;</span>'; //"&#128992;";
 const greenDot = '<span style="color:green">&#x2b24;</span>'; //"&#128994;";
+const goodNewsStyle = "color:green;font-weight:bold;";
+const badNewsStyle = "color:red;font-weight:bold;";
 
 function get (id) { return document.getElementById(id); }
-
 
 function sendMessageToSW (msg, callback)
 {
@@ -22,8 +23,26 @@ function sendMessageToSW (msg, callback)
 	p.then(response => { if(callback) callback(response); else console.log(response); });
 }
 
+
+function checkCapabilities ()
+{
+	const checkList = ["serviceWorker","caches","BroadcastChannel", "indexedDB"];
+	let allOK = true;
+	checkList.forEach( check =>
+	{
+		let ok = (typeof window[check]!=="undefined" || typeof navigator[check]!=="undefined");
+		if(ok) console.log("%c✓ "+check+" OK",goodNewsStyle);
+		else console.log("%c✗ "+check+" not available !",badNewsStyle);
+		allOK &= ok;
+	});
+	return allOK;
+}
+
+
 function init ()
 {
+	// if missing any browser feature, redirect to use ApplicationCache
+	if(!checkCapabilities()) return location.href = "index.php?appcache";
 	// register SW
 	navigator.serviceWorker.register('service-worker.js').then(
 		reg => 

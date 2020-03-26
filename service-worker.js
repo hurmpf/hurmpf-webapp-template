@@ -1,5 +1,5 @@
 /**
- COBTEK SERVICE WORKER
+ HURMPF OFFLINE CACHING SERVICE WORKER
  - cache files listed by MANIFEST file (JSON of path/hash)
  - update only modified files
  - BroadcastMessage : type = "message", "status", "downloading", "updated", value = content
@@ -13,6 +13,14 @@ const DBNAME = 'test-database';
 const MANIFEST = 'offline.php';
 const CHANNEL = (typeof BroadcastChannel === "undefined" ? null : new BroadcastChannel('sw-messages'));
 let databaseOK = false;
+
+
+
+
+
+//--------
+// EVENTS
+//--------
 
 
 self.addEventListener("install", function(event)
@@ -45,12 +53,11 @@ self.addEventListener('fetch', function(event)
 				headers: request.headers,
 				credentials: request.credentials
 			});
-			
 		}
 		const cachedResponse = await caches.match(request);
-		log("Fetching "+baseName(request.url)+" ("+(cachedResponse?"cached":"unknown")+")");
+		log("Fetching "+baseName(request.url)+" ("+(cachedResponse?"cached":"network")+")");
 		if (cachedResponse) return cachedResponse;
-		else return fetch(event.request.url);
+		else return fetch(event.request);
 	}());
 });
 
