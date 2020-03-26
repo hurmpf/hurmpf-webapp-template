@@ -7,12 +7,13 @@
 body { font-family: Calibri; padding: 1em; }
 #status { margin: 1em 0; padding: 1em; border: 1px solid black; display: inline-block; }
 </style>
-<?php if(!isset($_GET['appcache']) && !isset($_GET['nocache']))
-	// add service worker script
-	echo '<script src="script.js"></script>'."\n";
+<?php
+	$hasServiceWorker = (!isset($_GET['appcache']) && !isset($_GET['nocache']));
+	if($hasServiceWorker) // add service worker script
+		echo '<script src="script.js"></script>'."\n";
 ?>
 </head>
-<body onLoad="init()">
+<body<?php if($hasServiceWorker) echo ' onLoad="init()"'; ?>>
 
 <h1>Offline Test</h1>
 
