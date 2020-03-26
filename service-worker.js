@@ -27,7 +27,6 @@ self.addEventListener("install", function(event)
 {
 	log("install new SW : "+VERSION);
 	checkCapabilities();
-	event.waitUntil(dbUpdate());
 	self.skipWaiting();
 });
 
@@ -35,8 +34,7 @@ self.addEventListener("install", function(event)
 self.addEventListener("activate", function(event)
 {
 	log("activate SW "+VERSION);
-	event.waitUntil(cacheRemoveOld());
-	event.waitUntil(cacheUpdate());
+	event.waitUntil(dbUpdate().then(cacheRemoveOld()).then(cacheUpdate()));
 });
 
 
