@@ -2,7 +2,7 @@
 <html<?php if(isset($_GET['appcache'])) echo ' manifest="offline.php?appcache"'; ?>>
 <head>
 <meta charset="UTF-8">
-<link rel="icon" href="favicon.ico" />
+<link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon"> 
 <style>
 body { font-family: Calibri; padding: 1em; }
 #status { margin: 1em 0; padding: 1em; border: 1px solid black; display: inline-block; }
