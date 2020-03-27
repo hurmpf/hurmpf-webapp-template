@@ -13,15 +13,15 @@ body { font-family: Calibri; padding: 1em; }
 		echo '<script src="script.js"></script>'."\n";
 ?>
 </head>
-<body<?php if($hasServiceWorker) echo ' onLoad="init()"'; ?>>
+<body>
 
 <h1>Offline Test</h1>
 
-<p><input type="button" value="update" onclick="tryUpdate()" />
-<input type="button" value="cache update" onclick="sendMessageToSW('cache-update')" />
-<input type="button" value="status" onclick="askStatus()" />
-<input type="button" value="clear everything" onclick="sendMessageToSW('reset')" />
-<input type="button" value="fix" onclick="sendMessageToSW('fix')" />
+<p><input type="button" value="update" onclick="OfflineHandler.update()" />
+<input type="button" value="cache update" onclick="OfflineHandler.sendMessageToSW('cache-update')" />
+<input type="button" value="status" onclick="OfflineHandler.askStatus()" />
+<input type="button" value="clear everything" onclick="OfflineHandler.sendMessageToSW('reset')" />
+<input type="button" value="fix" onclick="OfflineHandler.sendMessageToSW('fix')" />
 
 <div id="status"></div>
 
