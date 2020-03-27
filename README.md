@@ -11,6 +11,7 @@ This is a Service Worker script for offline support.
 - manifest can be dynamic (eg. PHP) or built with app (eg. Gulp)
 - broadcast messages when downloading update
 - no external dependency
+- demo files includes a fallback to application cache if the browser does not support any required function
 
 ## How to use it
 
