@@ -75,6 +75,7 @@
 				case "message" : console.log('Received', event.data.value); break;
 				case "downloading" : get('cache').innerHTML = orangeDot+" "+event.data.value; break;
 				case "updated" : get('cache').innerHTML = greenDot+" "+(event.data.value ? "updated !" : "nothing new !"); break;
+				case "error" :  get('cache').innerHTML = orangeDot+" "+event.data.value; break;
 				default: console.log("unknown message : "+event.data.type+" : "+event.data.value);
 			}
 		});

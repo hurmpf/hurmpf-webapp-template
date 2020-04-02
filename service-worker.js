@@ -55,7 +55,7 @@ self.addEventListener('fetch', function(event)
 		const cachedResponse = await caches.match(request);
 		log("Fetching "+baseName(request.url)+" ("+(cachedResponse?"cached":"network")+")");
 		if (cachedResponse) return cachedResponse;
-		else return fetch(event.request);
+		else return fetch(event.request).catch(error => broadcastMessage('error',error));
 	}());
 });
 
@@ -203,7 +203,8 @@ async function cacheUpdate ()
 	}
 	catch (error)
 	{
-		warn("Unable to update cache : "+error+"\n"+error.stack);
+		//warn("Unable to update cache : "+error);
+		broadcastMessage('error','fetchFailed');
 	}
 }
 
