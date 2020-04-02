@@ -1,6 +1,7 @@
 (function(){
 	window.OfflineHandler = (window.OfflineHandler || {});
-	const version = "8"; 
+	const VERSION = "8";
+	const SW_FILENAME = 'offline-sw.js';
 	const redDot = '<span style="color:red">&#x2b24;</span>'; //"&#128308;";
 	const orangeDot = '<span style="color:orange">&#x2b24;</span>'; //"&#128992;";
 	const greenDot = '<span style="color:green">&#x2b24;</span>'; //"&#128994;";
@@ -9,7 +10,7 @@
 
 	function get (id) { return document.getElementById(id); }
 
-	OfflineHandler.getVersion = function () { return version; }
+	OfflineHandler.getVersion = function () { return VERSION; }
 	
 	OfflineHandler.sendMessageToSW = function (msg, callback)
 	{
@@ -45,10 +46,8 @@
 
 	OfflineHandler.init = function ()
 	{
-		// if missing any browser feature, redirect to use ApplicationCache
-		if(!OfflineHandler.checkCapabilities()) return location.href = "index.php?appcache";
 		// register SW
-		navigator.serviceWorker.register('service-worker.js').then(
+		navigator.serviceWorker.register(SW_FILENAME).then(
 			reg => 
 			{
 				console.log('service worker registred.');
@@ -103,5 +102,3 @@
 	}
 
 })();
-
-window.addEventListener('load', OfflineHandler.init, false);
