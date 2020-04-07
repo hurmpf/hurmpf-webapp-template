@@ -5,14 +5,14 @@
  - BroadcastMessage : type = "message", "status", "downloading", "updated", value = content
 **/
 
-"use strict";
+'use strict';
 
 const VERSION = 1;
 const CACHENAME = 'test-cache-'+VERSION;
 const DBNAME = 'test-database';
 const MANIFEST = 'offline.php';
-const CHANNEL = (typeof BroadcastChannel === "undefined" ? null : new BroadcastChannel('sw-messages'));
-let databaseOK = false;
+const CHANNELNAME = 'offline-sw';
+const CHANNEL = (typeof BroadcastChannel === "undefined" ? null : new BroadcastChannel(CHANNELNAME));
 
 
 
@@ -55,7 +55,7 @@ self.addEventListener('fetch', function(event)
 		const cachedResponse = await caches.match(request);
 		log("Fetching "+baseName(request.url)+" ("+(cachedResponse?"cached":"network")+")");
 		if (cachedResponse) return cachedResponse;
-		else return fetch(event.request).catch(error => broadcastMessage('error',error));
+		else return fetch(request.url).catch(error => broadcastMessage('error',error));
 	}());
 });
 
@@ -163,7 +163,7 @@ function cacheClear ()
 async function cacheUpdate ()
 {
 	try {
-		const manifestResponse = await fetch(MANIFEST, {headers:{'Cache-control':'no-cache'}});
+		const manifestResponse = await fetch(MANIFEST, {cache: "no-store", headers:{'Cache-control':'no-cache'}});
 		const manifestObject = await manifestResponse.json();
 		const list = manifestObject.files;
 		let filesToDownload = [];
@@ -189,7 +189,7 @@ async function cacheUpdate ()
 			for(let i=0; i<nb; i++)
 			{
 				const file = filesToDownload[i]
-				await cache.add(file).then(async function()
+				await cache.add(new Request(file,{cache: "no-store", headers:{'Cache-control':'no-cache'}})).then(async function()
 				{
 					await dbPut("files", {path:file, hash:list[file]}).then(() => broadcastMessage("downloading",Math.round(100*(i+1)/nb)+"%"));
 				});

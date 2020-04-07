@@ -1,5 +1,5 @@
-(function(){
-	window.App = (window.App || {});
+const App = (function()
+{
 	const VERSION = "1";
 	const NOTIF_ERROR = 1;
 	const NOTIF_MESSAGE = 2;
@@ -10,50 +10,83 @@
 	const goodNewsStyle = "color:green;font-weight:bold;";
 	const badNewsStyle = "color:red;font-weight:bold;";
 	
-	App.currentScreen = "loading";
+	let _currentScreen = "loading";
 
-	var get = function (id) { return document.getElementById(id); }
+	const get = function (id) { return document.getElementById(id); }
+	const useSW = (location.search.indexOf("appcache")==-1 && location.search.indexOf("nocache")==-1)
 	
-	App.show = function (destination)
+	const show = function (destination)
 	{
 		if(!get(destination)) throw new Error("Screen '"+destination+"' not found");
-		if(!get(App.currentScreen)) throw new Error("Screen '"+App.currentScreen+"' not found");
-		get(App.currentScreen).style.display = "none";
-		App.currentScreen = destination;
-		get(App.currentScreen).style.display = "block";
+		if(!get(_currentScreen)) throw new Error("Screen '"+_currentScreen+"' not found");
+		get(_currentScreen).style.display = "none";
+		_currentScreen = destination;
+		get(_currentScreen).style.display = "block";
 	}
 
-	App.getVersion = function () { return VERSION; }
-	
-	App.init = async function ()
+
+	const init = async function ()
 	{
-		if(!App.checkCapabilities()) return App.show('oldbrowser');
+		if(missingBrowserFeatures().length>0) return show('oldbrowser');
 		
-		if(location.search.indexOf("appcache")==-1 && location.search.indexOf("nocache")==-1)
+		if(!useSW)
+		{
+			navigator.serviceWorker.getRegistrations().then(
+				function(registrations) { for(let registration of registrations) registration.unregister(); }
+			);
+		}
+		if(useSW)
 		{
 			// if missing any browser feature, redirect to use ApplicationCache
-			if(!OfflineHandler.checkCapabilities()) return location.href = "index.php?appcache";
+			if(OfflineHandler.missingBrowserFeatures().length>0) return location.href = "index.php?appcache";
 			// initialize Offline Service Worker
 			await OfflineHandler.init();
-			OfflineHandler.update();
+			OfflineHandler.workerUpdate();
 		}
-		App.show('home');
+		console.log("App started");
+		show('home');
 	}
 	
-	App.checkCapabilities = function ()
+	
+	const missingBrowserFeatures = function ()
 	{
-		const checkList = ["createEvent"];
-		let allOK = true;
+		const checkList = [];
+		let missing = [];
 		checkList.forEach( check =>
 		{
-			let ok = (check in document || check in window || check in navigator);
-			if(ok) console.log("%c✓ "+check+" OK",goodNewsStyle);
-			else console.log("%c✗ "+check+" not available !",badNewsStyle);
-			allOK &= ok;
+			let ok = (check in window || check in navigator);
+			if(!ok) missing.push(check);
 		});
-		return allOK;
+		return missing;
 	}
-
+	
+	
+	const showOfflineStatus = function ()
+	{
+		OfflineHandler.askStatus(function(response)
+		{
+			let txt = "<p>Version : "+response.version;
+			txt += "<p>Cache size : "+(response.size ? (Math.round(response.size/1024)+" ko") : "unknown");
+			txt += "<p>Integrity : "+(response.integrity?greenDot:redDot);
+			//txt += "<p>Database : <br>"+response.database.map(x => x.path).join('<br>');
+			//txt += "<p>Cache : <br>"+response.cache.join('<br>');
+			get('status').innerHTML = txt;
+		});
+	}
+	
+	let API = {
+		getVersion: () => VERSION,
+		init: init
+	}
+	if(useSW)
+	{
+		API.workerUpdate = OfflineHandler.workerUpdate;
+		API.cacheUpdate = OfflineHandler.cacheUpdate;
+		API.cacheReset = OfflineHandler.cacheReset;
+		API.showOfflineStatus = showOfflineStatus;
+		API.fix = OfflineHandler.resetEverything;
+	}
+	return API;
 })();
 
 window.addEventListener('load', App.init, false);

@@ -4,10 +4,9 @@
 <meta charset="UTF-8">
 <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon"> 
 <style>
-body { font-family: Calibri; padding: 1em; }
 #status { margin: 1em 0; padding: 1em; border: 1px solid black; display: inline-block; }
-html, body, .screen { width:100%; height:100%; }
-.screen { display: none; }
+html, body { font-family:sans-serif; width:100%; height:100%; padding:0; margin:0; }
+.screen { width:calc(100%-1em); height:calc(100%-1em); padding:1em; display: none; }
 #loading { display: block; }
 #notification {
 	position: absolute; bottom: 0; right: 0;
@@ -30,11 +29,11 @@ html, body, .screen { width:100%; height:100%; }
 <div class="screen" id="home">
 	<h1>Offline Test</h1>
 
-	<p><input type="button" value="update" onclick="OfflineHandler.update()" />
-	<input type="button" value="cache update" onclick="OfflineHandler.sendMessageToSW('cache-update')" />
-	<input type="button" value="status" onclick="OfflineHandler.askStatus()" />
-	<input type="button" value="clear everything" onclick="OfflineHandler.sendMessageToSW('reset')" />
-	<input type="button" value="fix" onclick="OfflineHandler.sendMessageToSW('fix')" />
+	<p><input type="button" value="update SW" onclick="App.workerUpdate()" />
+	<input type="button" value="update cache" onclick="App.cacheUpdate()" />
+	<input type="button" value="clear cache" onclick="App.cacheReset()" />
+	<input type="button" value="status" onclick="App.showOfflineStatus()" />
+	<input type="button" value="fix" onclick="App.fix()" />
 
 	<div id="status"></div>
 </div>
