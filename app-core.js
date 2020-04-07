@@ -31,6 +31,7 @@ const App = (function()
 		
 		if(!useSW)
 		{
+			// remove service worker
 			navigator.serviceWorker.getRegistrations().then(
 				function(registrations) { for(let registration of registrations) registration.unregister(); }
 			);
@@ -41,7 +42,9 @@ const App = (function()
 			if(OfflineHandler.missingBrowserFeatures().length>0) return location.href = "index.php?appcache";
 			// initialize Offline Service Worker
 			await OfflineHandler.init();
-			OfflineHandler.workerUpdate();
+			window.addEventListener("cacheUpdate", cacheEventHandler);
+			await OfflineHandler.workerUpdate();
+			await OfflineHandler.cacheUpdate();
 		}
 		console.log("App started");
 		show('home');
@@ -61,6 +64,32 @@ const App = (function()
 	}
 	
 	
+	const cacheEventHandler = function (event)
+	{
+		if(event.detail.type=='progress') console.log("Cache download : "+event.detail.progress);
+		if(event.detail.type=='finish' && event.detail.updated) showNotification("Une mise à jour est disponible !<br><small>Cliquez ici pour relancer l'application</small>", () => document.location.reload(true));
+	}
+	
+	
+	const showNotification = function (text, callback)
+	{
+		let newNotif = document.createElement("div");
+		newNotif.innerHTML = text;
+		newNotif.style.display = "block";
+		newNotif.style.opacity = 1;
+		newNotif.onclick = (function() { if(callback) callback(); hideNotification(newNotif); });
+		newNotif.timeout = setTimeout(()=>hideNotification(newNotif),10000);
+		get('notifications').appendChild(newNotif);
+	}
+	
+	const hideNotification = function (notif)
+	{
+		notif.style.opacity = 0;
+		clearTimeout(notif.timeout);
+		setTimeout(function() { notif.style.display = "none"; }, 1000);
+	}
+
+	
 	const showOfflineStatus = function ()
 	{
 		OfflineHandler.askStatus(function(response)
@@ -76,7 +105,9 @@ const App = (function()
 	
 	let API = {
 		getVersion: () => VERSION,
-		init: init
+		init: init,
+		showNotification: showNotification,
+		hideNotification: hideNotification
 	}
 	if(useSW)
 	{

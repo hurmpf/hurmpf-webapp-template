@@ -49,9 +49,9 @@ const OfflineHandler = (function()
 			switch(event.data.type)
 			{
 				case "message" : console.log('Received', event.data.value); break;
-				case "downloading" : window.dispatchEvent(new CustomEvent("cacheUpdate",{type:'progress', progress:event.data.value})); break;
-				case "updated" : window.dispatchEvent(new CustomEvent("cacheUpdate",{type:'finish', updated:event.data.value})); break;
-				case "error" :  window.dispatchEvent(new CustomEvent("cacheUpdate",{type:'error', error:event.data.value})); break;
+				case "downloading" : window.dispatchEvent(new CustomEvent("cacheUpdate",{detail:{type:'progress', progress:event.data.value}})); break;
+				case "updated" : window.dispatchEvent(new CustomEvent("cacheUpdate",{detail:{type:'finish', updated:event.data.value}})); break;
+				case "error" :  window.dispatchEvent(new CustomEvent("cacheUpdate",{detail:{type:'error', error:event.data.value}})); break;
 				default: console.log("unknown message : "+event.data.type+" : "+event.data.value); 
 			}
 		});

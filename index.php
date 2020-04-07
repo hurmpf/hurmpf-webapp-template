@@ -8,9 +8,16 @@
 html, body { font-family:sans-serif; width:100%; height:100%; padding:0; margin:0; }
 .screen { width:calc(100%-1em); height:calc(100%-1em); padding:1em; display: none; }
 #loading { display: block; }
-#notification {
-	position: absolute; bottom: 0; right: 0;
-	border: 1px solid black; border-radius: 1em 0 0 0; 
+#notifications { position: absolute; bottom: 1em; right: 1em; }
+#notifications div {
+	margin-top: 1em;
+	padding: 1em;
+	border: 1px solid black;
+	border-radius: 0.5em;
+	background-color: #fdd;
+	transition: opacity 1s ease-out;
+	opacity: 0;
+	display: none;
 }
 </style>
 <?php
@@ -29,16 +36,17 @@ html, body { font-family:sans-serif; width:100%; height:100%; padding:0; margin:
 <div class="screen" id="home">
 	<h1>Offline Test</h1>
 
-	<p><input type="button" value="update SW" onclick="App.workerUpdate()" />
+	<p>
+	<input type="button" value="update SW" onclick="App.workerUpdate()" />
 	<input type="button" value="update cache" onclick="App.cacheUpdate()" />
 	<input type="button" value="clear cache" onclick="App.cacheReset()" />
 	<input type="button" value="status" onclick="App.showOfflineStatus()" />
 	<input type="button" value="fix" onclick="App.fix()" />
 
-	<div id="status"></div>
+	<div id="status">...</div>
 </div>
 
-<div id="notification"></div>
+<div id="notifications"></div>
 
 </body>
 <html>
