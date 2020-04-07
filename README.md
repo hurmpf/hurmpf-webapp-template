@@ -1,7 +1,8 @@
 # hurmpf-webapp-template
 
-Template for a simple Web Application, using some PHP back-office.
 /!\ Work in progress /!\
+
+Template for a simple Web Application, using some PHP back-office.
 
 ## Features
 
