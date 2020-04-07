@@ -1,12 +1,14 @@
 # hurmpf-webapp-template
 
-Template for a simple Web Application, using some PHP back-office
+Template for a simple Web Application, using some PHP back-office.
+/!\ Work in progress /!\
 
 ## Features
 
 - Single Page Application,using JS to dynamically show blocks
 - Offline caching using Service Workers, or ApplicationCache on older browsers
 - Loading screen
+- Notifications
 - Utility functions
 
 ## Details
