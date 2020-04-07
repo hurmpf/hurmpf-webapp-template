@@ -66,8 +66,10 @@ const App = (function()
 	
 	const cacheEventHandler = function (event)
 	{
-		if(event.detail.type=='progress') console.log("Cache download : "+event.detail.progress);
-		if(event.detail.type=='finish' && event.detail.updated) showNotification("Une mise à jour est disponible !<br><small>Cliquez ici pour relancer l'application</small>", () => document.location.reload(true));
+		const e = event.detail;
+		if(e.type=='error') showNotification("Erreur de cache !<br><small>"+e.error+"</small>");
+		if(e.type=='progress') console.log("Cache download : "+e.progress);
+		if(e.type=='finish' && e.updated) showNotification("Une mise à jour est disponible !<br><small>Cliquez ici pour relancer l'application</small>", ()=>document.location.reload());
 	}
 	
 	
@@ -77,7 +79,7 @@ const App = (function()
 		newNotif.innerHTML = text;
 		newNotif.style.display = "block";
 		newNotif.style.opacity = 1;
-		newNotif.onclick = (function() { if(callback) callback(); hideNotification(newNotif); });
+		newNotif.onclick = (function(notif, callback) { return function() { if(callback) callback(); hideNotification(notif); } })(newNotif,callback);
 		newNotif.timeout = setTimeout(()=>hideNotification(newNotif),10000);
 		get('notifications').appendChild(newNotif);
 	}
@@ -106,8 +108,7 @@ const App = (function()
 	let API = {
 		getVersion: () => VERSION,
 		init: init,
-		showNotification: showNotification,
-		hideNotification: hideNotification
+		show: show
 	}
 	if(useSW)
 	{

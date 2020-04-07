@@ -6,8 +6,9 @@ const OfflineHandler = (function()
 	const CHANNEL_NAME = 'offline-sw';
 	
 	function get (id) { return document.getElementById(id); }
-
-
+	
+	function fireEvent (type, data) { window.dispatchEvent(new CustomEvent(type,{detail:data})) };
+	
 	const missingBrowserFeatures = function ()
 	{
 		const checkList = ["serviceWorker","caches","BroadcastChannel", "indexedDB"];
@@ -49,14 +50,14 @@ const OfflineHandler = (function()
 			switch(event.data.type)
 			{
 				case "message" : console.log('Received', event.data.value); break;
-				case "downloading" : window.dispatchEvent(new CustomEvent("cacheUpdate",{detail:{type:'progress', progress:event.data.value}})); break;
-				case "updated" : window.dispatchEvent(new CustomEvent("cacheUpdate",{detail:{type:'finish', updated:event.data.value}})); break;
-				case "error" :  window.dispatchEvent(new CustomEvent("cacheUpdate",{detail:{type:'error', error:event.data.value}})); break;
+				case "downloading" : fireEvent("cacheUpdate",{type:'progress', progress:event.data.value}); break;
+				case "updated" : fireEvent("cacheUpdate",{type:'finish', updated:event.data.value}); break;
+				case "error" : fireEvent("cacheUpdate",{type:'error', error:event.data.value}); break;
 				default: console.log("unknown message : "+event.data.type+" : "+event.data.value); 
 			}
 		});
 	}
-
+	
 	
 	const sendMessageToSW = function (msg, callback)
 	{
@@ -73,13 +74,13 @@ const OfflineHandler = (function()
 		});
 		p.then(response => { if(callback) callback(response); else console.log(response); });
 	}
-
+	
 	
 	const workerUpdate = function ()
 	{
 		navigator.serviceWorker.getRegistration().then(reg => reg.update());
 	}
-
+	
 	
 	return {
 		getVersion : () => VERSION,
