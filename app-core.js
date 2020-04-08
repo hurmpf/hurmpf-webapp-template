@@ -13,7 +13,7 @@ const App = (function()
 	let _currentScreen = "loading";
 
 	const get = function (id) { return document.getElementById(id); }
-	const useSW = (location.search.indexOf("appcache")==-1 && location.search.indexOf("nocache")==-1)
+	let useSW = (location.search.indexOf("appcache")==-1 && location.search.indexOf("nocache")==-1)
 	
 	const show = function (destination)
 	{
@@ -42,6 +42,8 @@ const App = (function()
 			if(OfflineHandler.missingBrowserFeatures().length>0) return location.href = "index.php?appcache";
 			// initialize Offline Service Worker
 			await OfflineHandler.init();
+			window.addEventListener("noController", noController);
+			window.addEventListener("newWorkerInstalled", updateAvailable);
 			window.addEventListener("cacheUpdate", cacheEventHandler);
 			await OfflineHandler.workerUpdate();
 			await OfflineHandler.cacheUpdate();
@@ -64,12 +66,25 @@ const App = (function()
 	}
 	
 	
+	const noController = function ()
+	{
+		showNotification("Le service de cache n'est pas lancé.<br><small>Cliquez ici pour relancer l'application.</small>",()=>document.location.reload());
+		useSW = false;
+	}
+	
+	
+	const updateAvailable = function ()
+	{
+		showNotification("Une mise à jour est disponible.<br><small>Cliquez ici pour relancer l'application.</small>",()=>document.location.reload());
+	}
+	
+	
 	const cacheEventHandler = function (event)
 	{
 		const e = event.detail;
 		if(e.type=='error') showNotification("Erreur de cache !<br><small>"+e.error+"</small>");
 		if(e.type=='progress') console.log("Cache download : "+e.progress);
-		if(e.type=='finish' && e.updated) showNotification("Une mise à jour est disponible !<br><small>Cliquez ici pour relancer l'application</small>", ()=>document.location.reload());
+		if(e.type=='finish' && e.updated) updateAvailable();
 	}
 	
 	

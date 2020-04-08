@@ -14,7 +14,8 @@ const MANIFEST = 'offline.php';
 const CHANNELNAME = 'offline-sw';
 const CHANNEL = (typeof BroadcastChannel === "undefined" ? null : new BroadcastChannel(CHANNELNAME));
 
-
+// for simulation
+const sleep = function (ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
 
 
@@ -204,7 +205,7 @@ async function cacheUpdate ()
 	catch (error)
 	{
 		//warn("Unable to update cache : "+error);
-		broadcastMessage('error','fetchFailed');
+		broadcastMessage('error','Fetch failed');
 	}
 }
 

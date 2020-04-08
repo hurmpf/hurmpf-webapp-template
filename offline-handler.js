@@ -21,6 +21,19 @@ const OfflineHandler = (function()
 		return missing;
 	}
 	
+	
+	const workerUpdateFound = function (reg)
+	{
+		let newWorker = reg.installing;
+		newWorker.addEventListener('statechange', () =>
+		{
+			if (newWorker.state==='installed' && navigator.serviceWorker.controller)
+			{
+				fireEvent("newWorkerInstalled");
+			}
+		});
+	}
+	
 
 	const init = function ()
 	{
@@ -29,18 +42,7 @@ const OfflineHandler = (function()
 			reg => 
 			{
 				console.log('service worker registred.');
-				reg.addEventListener('updatefound', () =>
-				{
-					let newWorker = reg.installing;
-					newWorker.addEventListener('statechange', () =>
-					{
-						if (newWorker.state === 'installed' && navigator.serviceWorker.controller)
-						{
-							console.log("NEW SERVICE WORKER INSTALLED");
-							// maybe ask to reload the page
-						}
-					});
-				});
+				reg.addEventListener('updatefound', () => { workerUpdateFound(reg); });
 			},
 			error => console.log('service worker registration failed : '+error)
 		);
@@ -61,7 +63,11 @@ const OfflineHandler = (function()
 	
 	const sendMessageToSW = function (msg, callback)
 	{
-		if(!navigator.serviceWorker.controller) throw new Error("no SW service !");
+		if(!navigator.serviceWorker.controller)
+		{
+			fireEvent("noController");
+			return;
+		}
 		let p = new Promise(function(resolve, reject)
 		{
 			let messageChannel = new MessageChannel();
@@ -83,7 +89,7 @@ const OfflineHandler = (function()
 	
 	
 	return {
-		getVersion : () => VERSION,
+		getVersion: () => VERSION,
 		missingBrowserFeatures: missingBrowserFeatures,
 		init: init,
 		workerUpdate: workerUpdate,
