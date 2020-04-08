@@ -44,6 +44,12 @@ html, body { font-family:sans-serif; width:100%; height:100%; padding:0; margin:
 	<input type="button" value="fix" onclick="App.fix()" />
 
 	<div id="status">...</div>
+	
+	<p>
+		<img src="assets/earth1.jpg" style="max-height:20vh; max-width:20vw;" />
+		<img src="assets/earth2.jpg" style="max-height:20vh; max-width:20vw;" />
+		<img src="assets/earth3.jpg" style="max-height:20vh; max-width:20vw;" />
+		<img src="assets/earth4.jpg" style="max-height:20vh; max-width:20vw;" />
 </div>
 
 <div id="notifications"></div>
