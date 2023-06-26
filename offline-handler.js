@@ -4,12 +4,15 @@ const OfflineHandler = (function()
 	const VERSION = "8";
 	const SW_FILENAME = 'offline-sw.js';
 	const CHANNEL_NAME = 'offline-sw';
+	let workerRunningStatus = "unknown"; // installing, installed, activating, activated, redundant, error
+	let workerUpdateStatus = "unknown"; // noupdate, updating, ready, error
+	let cacheStatus = "unknown"; // noupdate, updating, ready, error
 	
 	function get (id) { return document.getElementById(id); }
 	
 	function fireEvent (type, data) { window.dispatchEvent(new CustomEvent(type,{detail:data})) };
 	
-	const missingBrowserFeatures = function ()
+	const getMissingBrowserFeatures = function ()
 	{
 		const checkList = ["serviceWorker","caches","BroadcastChannel", "indexedDB"];
 		let missing = [];
@@ -24,51 +27,54 @@ const OfflineHandler = (function()
 	
 	const workerUpdateFound = function (reg)
 	{
+		workerUpdateStatus = "updating";
 		let newWorker = reg.installing;
 		newWorker.addEventListener('statechange', () =>
 		{
 			if (newWorker.state==='installed' && navigator.serviceWorker.controller)
 			{
-				fireEvent("newWorkerInstalled");
+				workerUpdateStatus = "ready";
+				fireEvent("workerInstalled");
 			}
 		});
 	}
 	
 
-	const init = function ()
+	const init = async function ()
 	{
-		// register SW
-		navigator.serviceWorker.register(SW_FILENAME).then(
-			reg => 
-			{
-				console.log('service worker registred.');
-				reg.addEventListener('updatefound', () => { workerUpdateFound(reg); });
-			},
-			error => console.log('service worker registration failed : '+error)
-		);
 		// listen for broadcast messages
 		(new BroadcastChannel(CHANNEL_NAME)).addEventListener('message', event =>
 		{
 			switch(event.data.type)
 			{
 				case "message" : console.log('Received', event.data.value); break;
+				case "installed" : fireEvent("workerInstalled"); break;
 				case "downloading" : fireEvent("cacheUpdate",{type:'progress', progress:event.data.value}); break;
 				case "updated" : fireEvent("cacheUpdate",{type:'finish', updated:event.data.value}); break;
 				case "error" : fireEvent("cacheUpdate",{type:'error', error:event.data.value}); break;
 				default: console.log("unknown message : "+event.data.type+" : "+event.data.value); 
 			}
 		});
+		// register SW
+		workerRunningStatus = "installing";
+		try {
+			const reg = await navigator.serviceWorker.register(SW_FILENAME)
+			console.log('Service worker registered.', reg);
+			workerRunningStatus = "installed";
+			reg.addEventListener('updatefound', () => { workerUpdateFound(reg); });
+		}
+		catch (error) { currentStatus = "failed"; throw new Error('Service worker registration failed : '+error); }
 	}
 	
 	
-	const sendMessageToSW = function (msg, callback)
+	const sendMessageToSW = function (msg,)
 	{
 		if(!navigator.serviceWorker.controller)
 		{
 			fireEvent("noController");
 			return;
 		}
-		let p = new Promise(function(resolve, reject)
+		return new Promise(function(resolve, reject)
 		{
 			let messageChannel = new MessageChannel();
 			messageChannel.port1.onmessage = function(event)
@@ -78,24 +84,30 @@ const OfflineHandler = (function()
 			};
 			navigator.serviceWorker.controller.postMessage(msg, [messageChannel.port2]);
 		});
-		p.then(response => { if(callback) callback(response); else console.log(response); });
 	}
 	
 	
 	const workerUpdate = function ()
 	{
-		navigator.serviceWorker.getRegistration().then(reg => reg.update());
+		return navigator.serviceWorker.getRegistration().then(reg => reg.update());
+	}
+	
+	const askStatus = function (callback)
+	{
+		let p = sendMessageToSW('status');
+		if(callback) p.then( callback );
+		return p;
 	}
 	
 	
 	return {
 		getVersion: () => VERSION,
-		missingBrowserFeatures: missingBrowserFeatures,
+		getMissingBrowserFeatures: getMissingBrowserFeatures,
 		init: init,
 		workerUpdate: workerUpdate,
 		cacheUpdate: () => sendMessageToSW('cache-update'),
 		cacheReset: () => sendMessageToSW('reset'),
-		askStatus: (callback) => sendMessageToSW('status',callback),
+		askStatus: askStatus,
 		resetEverything: () => sendMessageToSW('fix')
 	}
 

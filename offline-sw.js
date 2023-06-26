@@ -1,20 +1,21 @@
 /**
  HURMPF OFFLINE CACHING SERVICE WORKER
- - cache files listed by MANIFEST file (JSON of path/hash)
- - update only modified files
+ - cache files listed by MANIFEST file (offline.php returns a JSON of path/hash)
+ - updates only modified files (file date or hash noted in database)
  - BroadcastMessage : type = "message", "status", "downloading", "updated", value = content
 **/
 
 'use strict';
 
-const VERSION = 1;
-const CACHENAME = 'test-cache-'+VERSION;
-const DBNAME = 'test-database';
-const MANIFEST = 'offline.php';
-const CHANNELNAME = 'offline-sw';
+const VERSION = 1;                             // version, append in cache name and used for database
+const CACHEPREFIX = 'test-cache-';             // used to detect the caches of this app (don't delete cache of other apps)
+const CACHENAME = CACHEPREFIX+VERSION;         // cache name for offline access
+const DBNAME = 'test-database';                // name of database where are stored the files hashes and basic infos
+const MANIFEST = 'offline.php';                // path to manifest script (should not be changed)
+const CHANNELNAME = 'offline-sw';              // comminucation channel between service worker and page script (should not be changed)
 const CHANNEL = (typeof BroadcastChannel === "undefined" ? null : new BroadcastChannel(CHANNELNAME));
 
-// for simulation
+// for simulation (not used)
 const sleep = function (ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
 
@@ -23,24 +24,27 @@ const sleep = function (ms) { return new Promise(resolve => setTimeout(resolve, 
 // EVENTS
 //--------
 
-
+// on installation, remove old cache and update current cache
 self.addEventListener("install", function(event)
 {
 	log("install new SW : "+VERSION);
-	checkCapabilities();
-	self.skipWaiting();
+	broadcastMessage('installed');
+	event.waitUntil(dbUpdate().then(cacheRemoveOld()).then(cacheUpdate()));
+	//self.skipWaiting();
 });
 
 
+// on activation, do nothing ?
 self.addEventListener("activate", function(event)
 {
 	log("activate SW "+VERSION);
-	event.waitUntil(dbUpdate().then(cacheRemoveOld()).then(cacheUpdate()));
+	//event.waitUntil(dbUpdate().then(cacheRemoveOld()).then(cacheUpdate()));
 });
 
 
 // on fetch event, try cache first, if no match call network
-self.addEventListener('fetch', function(event)
+// if empty url, get main page instead
+self.addEventListener("fetch", function(event)
 {
 	event.respondWith(async function() {
 		let request = event.request;
@@ -61,16 +65,24 @@ self.addEventListener('fetch', function(event)
 });
 
 
-self.addEventListener('message', function(event)
+// on message received 
+// status : send current status
+// cache-update : update cache
+// reset : reset database and cache
+// fix : attempt to reset everything in case of problem
+self.addEventListener('message', async function(event)
 {
+	log("receive message '"+event.data+"'");
+	let answer = "?";
 	switch (event.data)
 	{
-		case "status": postStatus(event.ports[0]); break;
-		case "cache-update": cacheUpdate(); break;
-		case "reset": resetDatabaseAndCache(); break;
-		case "fix": fix(); break;
+		case "status": answer = await getStatus(); break;
+		case "cache-update": answer = await cacheUpdate(); break;
+		case "reset": answer = await resetDatabaseAndCache(); break;
+		case "fix": answer = await fix(); break;
 		default: log("unknown message : "+event.data);
 	}
+	event.ports[0].postMessage(answer);
 });
 
 
@@ -81,8 +93,8 @@ self.addEventListener('message', function(event)
 // UTILS
 //-------
 
-function log (content) { console.log("SW :",content); }
-function warn(content) { console.warn("SW :",content); }
+function log (content) { console.log("SW :", content); }
+function warn(content) { console.warn("SW :", content); }
 
 function broadcastMessage (type, value) { if(CHANNEL) CHANNEL.postMessage({ type:type, value:value }); }
 
@@ -97,15 +109,6 @@ function promisifyRequest (request)
 	});
 }
 
-function checkCapabilities () 
-{
-	let missingList = [];
-	if(typeof BroadcastChannel === "undefined") missingList.push("BroadcastChannel");
-	if(typeof indexedDB === "undefined") missingList.push("indexedDB");
-	if(missingList.length>0) warn("Not supported : "+missingList.join(", "));
-	else log("Everything is supported");	
-}
-
 
 
 
@@ -114,8 +117,8 @@ function checkCapabilities ()
 // COMMUNICATION
 //---------------
 
-// port from messageChannel.port2
-async function postStatus (port)
+// returns infos object { version:string, scope:string, size:int, database:array, cache:array, integrity:boolean }
+async function getStatus ()
 { 
 	let returnValue = { };
 	returnValue.version = VERSION;
@@ -125,7 +128,7 @@ async function postStatus (port)
 	returnValue.database = await dbList('files');
 	returnValue.cache = await cacheList();
 	returnValue.integrity = await checkIntegrity();
-	port.postMessage(returnValue);
+	return returnValue;
 }
 
 
@@ -136,6 +139,7 @@ async function postStatus (port)
 // CACHE
 //-------
 
+// returns the list of cached url
 async function cacheList ()
 {
 	let cache = await caches.open(CACHENAME);
@@ -143,12 +147,13 @@ async function cacheList ()
 	return cacheKeys.map(element => baseName(element.url));
 }
 
+// delete older caches (same prefix but different version)
 async function cacheRemoveOld ()
 {
 	var cachenames = await caches.keys();
 	cachenames.forEach(async function(cachename)
 	{
-		if(cachename!=CACHENAME)
+		if(cachename.indexOf(CACHEPREFIX)==0 && cachename!=CACHENAME)
 		{
 			log("delete "+cachename)
 			await caches.delete(cachename);
@@ -156,11 +161,13 @@ async function cacheRemoveOld ()
 	});
 }
 
+// delete the current cache (for bug fixing)
 function cacheClear ()
 {
 	return caches.delete(CACHENAME);
 }
 
+// update the current cache : check if file changed and if yes download it
 async function cacheUpdate ()
 {
 	try {
@@ -201,11 +208,13 @@ async function cacheUpdate ()
 		broadcastMessage("updated",filesToDownload.length>0);
 		await cacheClean(true);
 		log("cache update successful");
+		return "OK";
 	}
 	catch (error)
 	{
 		//warn("Unable to update cache : "+error);
-		broadcastMessage('error','Fetch failed');
+		//broadcastMessage('error','Fetch failed');
+		return "error";
 	}
 }
 
@@ -267,7 +276,7 @@ async function dbUpdate ()
 	catch (error) { warn("error updating database : "+error); }
 }
 
-// vide un IDBObjectStore, renvoi la Promise
+// empty the IDBObjectStore, return the Promise
 async function dbClear (storeName)
 {
 	try
@@ -280,7 +289,8 @@ async function dbClear (storeName)
 	catch (error) { warn("error clearing database : "+error); }
 }
 
-//renvoi le contenu du store
+
+// return the store content
 async function dbList (storeName)
 {
 	try
@@ -293,7 +303,7 @@ async function dbList (storeName)
 	catch (error) { warn("error listing database : "+error); }
 }
 
-// renvoi la valeur associée à key dans l'IDBObjectStore
+// return the value associated to this key in this IDBObjectStore
 async function dbGet (storeName, key)
 {
 	try
@@ -306,7 +316,7 @@ async function dbGet (storeName, key)
 	catch (error) { warn("error reading database : "+error); }
 }
 
-// ajoute un item dans l'IDBObjectStore
+// add an item in the IDBObjectStore
 async function dbPut (storeName, item)
 {
 	try
@@ -329,16 +339,18 @@ async function dbPut (storeName, item)
 
 async function resetDatabaseAndCache ()
 {
-	await dbClear("files");
-	await dbClear("infos");
-	await indexedDB.deleteDatabase(DBNAME);
+	//await dbClear("files");
+	//await dbClear("infos");
+	await indexedDB.deleteDatabase(DBNAME); /* TODO: check this */
 	await cacheClear();
 	log("database and cache cleared !");
+	return "OK";
 }
 
 async function checkIntegrity (verbose)
 {
 	const dbFiles = await dbList("files");
+	if(!dbFiles) return false; // bad database
 	const cacheFiles = await cacheList();
 	let dbFilesSimple = [];
 	let ok = true;
@@ -368,10 +380,12 @@ async function fix ()
 	if(!ok)
 	{
 		await resetDatabaseAndCache();
+		await dbUpdate();
 		await cacheUpdate();
 		ok = await checkIntegrity();
 		log("intregrity : "+(ok?"ok":"failed"));
 	}
+	return "OK";
 	/*
 	var request = indexedDB.open(DBNAME, version);
 	request.onsuccess = function()

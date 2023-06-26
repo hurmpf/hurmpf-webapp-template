@@ -8,6 +8,7 @@
 html, body { font-family:sans-serif; width:100%; height:100%; padding:0; margin:0; }
 .screen { width:calc(100%-1em); height:calc(100%-1em); padding:1em; display: none; }
 #loading { display: block; }
+#loading h1 { text-align: center; margin-top: 20vmin; }
 #notifications { position: absolute; bottom: 1em; right: 1em; }
 #notifications div {
 	margin-top: 1em;
@@ -29,7 +30,9 @@ html, body { font-family:sans-serif; width:100%; height:100%; padding:0; margin:
 </head>
 <body>
 
-<div class="screen" id="loading">Loading...</div>
+<div class="screen" id="loading">
+	<h1>Loading...</h1>
+</div>
 
 <div class="screen" id="oldbrowser">Please update your browser</div>
 

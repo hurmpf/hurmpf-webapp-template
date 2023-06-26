@@ -27,7 +27,7 @@ const App = (function()
 
 	const init = async function ()
 	{
-		if(missingBrowserFeatures().length>0) return show('oldbrowser');
+		if(getMissingBrowserFeatures().length>0) return show('oldbrowser');
 		
 		if(!useSW)
 		{
@@ -38,22 +38,29 @@ const App = (function()
 		}
 		if(useSW)
 		{
-			// if missing any browser feature, redirect to use ApplicationCache
-			if(OfflineHandler.missingBrowserFeatures().length>0) return location.href = "index.php?appcache";
-			// initialize Offline Service Worker
-			await OfflineHandler.init();
-			window.addEventListener("noController", noController);
-			window.addEventListener("newWorkerInstalled", updateAvailable);
-			window.addEventListener("cacheUpdate", cacheEventHandler);
-			await OfflineHandler.workerUpdate();
-			await OfflineHandler.cacheUpdate();
+			// if missing any browser feature
+			if(OfflineHandler.getMissingBrowserFeatures().length>0)
+				alert("Your browser can't handle ServiceWorker ("+OfflineHandler.getMissingBrowserFeatures().join(", ")+") for offline caching, please consider using the appCache version or the noCache versions");
+			else
+			{
+				// listen to OfflineHandler messages
+				window.addEventListener("noController", workerNoController);
+				window.addEventListener("workerInstalled", updateAvailable);
+				window.addEventListener("cacheUpdate", cacheEventHandler);
+				// initialize Offline Service Worker
+				try { await OfflineHandler.init(); }
+				catch(error) { workerRegisterFailed(error); }
+				// if nothing is being installed, update
+				OfflineHandler.workerUpdate();
+			}
 		}
 		console.log("App started");
 		show('home');
+		OfflineHandler.cacheUpdate();
 	}
 	
 	
-	const missingBrowserFeatures = function ()
+	const getMissingBrowserFeatures = function ()
 	{
 		const checkList = [];
 		let missing = [];
@@ -66,37 +73,54 @@ const App = (function()
 	}
 	
 	
-	const noController = function ()
+	const workerRegisterFailed = function (error)
 	{
-		showNotification("Le service de cache n'est pas lancé.<br><small>Cliquez ici pour relancer l'application.</small>",()=>document.location.reload());
+		console.error("worker register failed : "+error);
+		showNotification("cache-error","Le service de cache a échoué.<br><small>Cliquez ici pour relancer l'application.</small>",()=>document.location.reload());
 		useSW = false;
 	}
 	
 	
+	const workerNoController = function ()
+	{
+		console.error("no controller");
+		showNotification("cache","Le service de cache n'est pas lancé.<br><small>Cliquez ici pour relancer l'application.</small>",()=>document.location.reload());
+		useSW = false;
+	}	
+	
 	const updateAvailable = function ()
 	{
-		showNotification("Une mise à jour est disponible.<br><small>Cliquez ici pour relancer l'application.</small>",()=>document.location.reload());
+		showNotification("cache","Une mise à jour est disponible.<br><small>Cliquez ici pour relancer l'application.</small>",()=>document.location.reload());
 	}
 	
 	
 	const cacheEventHandler = function (event)
 	{
 		const e = event.detail;
-		if(e.type=='error') showNotification("Erreur de cache !<br><small>"+e.error+"</small>");
-		if(e.type=='progress') console.log("Cache download : "+e.progress);
-		if(e.type=='finish' && e.updated) updateAvailable();
+		if(e.type=='error') showNotification("cache","Erreur de cache !<br><small>"+e.error+"</small>");
+		if(e.type=='progress') showNotification("cache-download","Téléchargement : "+e.progress);//console.log("Cache download : "+e.progress);
+		//if(e.type=='finish' && e.updated) updateAvailable();
 	}
 	
 	
-	const showNotification = function (text, callback)
+	// type = update, error, other
+	const showNotification = function (type, text, callback)
 	{
-		let newNotif = document.createElement("div");
-		newNotif.innerHTML = text;
-		newNotif.style.display = "block";
-		newNotif.style.opacity = 1;
-		newNotif.onclick = (function(notif, callback) { return function() { if(callback) callback(); hideNotification(notif); } })(newNotif,callback);
-		newNotif.timeout = setTimeout(()=>hideNotification(newNotif),10000);
-		get('notifications').appendChild(newNotif);
+		console.log("notif "+type+" : "+text);
+		if(type=="cache-download")
+		{
+			// look for another update notification
+			let prevNotif = document.querySelector(".notification-cache-download");
+			if(prevNotif) prevNotif.parentElement.removeChild(prevNotif);
+		}
+		let notifDiv = document.createElement("div")
+		notifDiv.innerHTML = text;
+		notifDiv.style.display = "block";
+		notifDiv.className = "notification-"+type;
+		notifDiv.style.opacity = 1;
+		notifDiv.onclick = (function(notif, callback) { return function() { if(callback) callback(); hideNotification(notif); } })(notifDiv,callback);
+		notifDiv.timeout = setTimeout(() => hideNotification(notifDiv),10000);
+		get('notifications').appendChild(notifDiv);
 	}
 	
 	const hideNotification = function (notif)
@@ -123,7 +147,8 @@ const App = (function()
 	let API = {
 		getVersion: () => VERSION,
 		init: init,
-		show: show
+		show: show,
+		showNotification: showNotification
 	}
 	if(useSW)
 	{
