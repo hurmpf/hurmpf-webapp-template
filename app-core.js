@@ -4,16 +4,18 @@ const App = (function()
 	const NOTIF_ERROR = 1;
 	const NOTIF_MESSAGE = 2;
 	const NOTIF_CACHE = 3;
-	const redDot = '<span style="color:red">&#x2b24;</span>'; //"&#128308;";
+	const redDot = '<span style="color:red">&#x2b24;</span>';       //"&#128308;";
 	const orangeDot = '<span style="color:orange">&#x2b24;</span>'; //"&#128992;";
-	const greenDot = '<span style="color:green">&#x2b24;</span>'; //"&#128994;";
+	const greenDot = '<span style="color:green">&#x2b24;</span>';   //"&#128994;";
 	const goodNewsStyle = "color:green;font-weight:bold;";
 	const badNewsStyle = "color:red;font-weight:bold;";
 	
 	let _currentScreen = "loading";
 
 	const get = function (id) { return document.getElementById(id); }
-	let useSW = (location.search.indexOf("appcache")==-1 && location.search.indexOf("nocache")==-1)
+	let useSW = (location.search.indexOf("nocache")==-1)
+			&& ('serviceWorker' in window || 'serviceWorker' in navigator)
+			&& ('caches' in window || 'caches' in navigator);
 	
 	const show = function (destination)
 	{
@@ -27,70 +29,46 @@ const App = (function()
 
 	const init = async function ()
 	{
-		if(getMissingBrowserFeatures().length>0) return show('oldbrowser');
-		
+		if(get('installButton')) get('installButton').style.display = useSW ? "block" : "none";
 		if(!useSW)
 		{
 			// remove service worker
-			navigator.serviceWorker.getRegistrations().then(
-				function(registrations) { for(let registration of registrations) registration.unregister(); }
-			);
+			if(navigator.serviceWorker)
+				navigator.serviceWorker.getRegistrations().then(
+					function(registrations) { console.log("Removing Service Worker"); for(let registration of registrations) registration.unregister(); }
+				);
 		}
 		if(useSW)
 		{
-			// if missing any browser feature
-			if(OfflineHandler.getMissingBrowserFeatures().length>0)
-				alert("Your browser can't handle ServiceWorker ("+OfflineHandler.getMissingBrowserFeatures().join(", ")+") for offline caching, please consider using the appCache version or the noCache versions");
-			else
-			{
-				// listen to OfflineHandler messages
-				window.addEventListener("noController", workerNoController);
-				window.addEventListener("workerInstalled", updateAvailable);
-				window.addEventListener("cacheUpdate", cacheEventHandler);
-				// initialize Offline Service Worker
-				try { await OfflineHandler.init(); }
-				catch(error) { workerRegisterFailed(error); }
-				// if nothing is being installed, update
-				OfflineHandler.workerUpdate();
-			}
+			// listen to OfflineHandler messages
+			window.addEventListener("cacheUpdate", cacheEventHandler);
+			// initialize Offline Service Worker
+			try { await OfflineHandler.init(); }
+			catch(error) { workerRegisterFailed(error); }
+			// if nothing is being installed, update
+			OfflineHandler.workerUpdate();
 		}
 		console.log("App started");
 		show('home');
-		OfflineHandler.cacheUpdate();
+		//OfflineHandler.cacheUpdate();
 	}
-	
-	
-	const getMissingBrowserFeatures = function ()
+
+
+	const install = function ()
 	{
-		const checkList = [];
-		let missing = [];
-		checkList.forEach( check =>
+		if(OfflineHandler)
 		{
-			let ok = (check in window || check in navigator);
-			if(!ok) missing.push(check);
-		});
-		return missing;
+			get("installButton").disabled = true;
+			get("installButton").value = "Installation en cours...";
+			OfflineHandler.workerInstall();
+		}
 	}
 	
 	
 	const workerRegisterFailed = function (error)
 	{
 		console.error("worker register failed : "+error);
-		showNotification("cache-error","Le service de cache a échoué.<br><small>Cliquez ici pour relancer l'application.</small>",()=>document.location.reload());
 		useSW = false;
-	}
-	
-	
-	const workerNoController = function ()
-	{
-		console.error("no controller");
-		showNotification("cache","Le service de cache n'est pas lancé.<br><small>Cliquez ici pour relancer l'application.</small>",()=>document.location.reload());
-		useSW = false;
-	}	
-	
-	const updateAvailable = function ()
-	{
-		showNotification("cache","Une mise à jour est disponible.<br><small>Cliquez ici pour relancer l'application.</small>",()=>document.location.reload());
 	}
 	
 	
@@ -99,7 +77,6 @@ const App = (function()
 		const e = event.detail;
 		if(e.type=='error') showNotification("cache","Erreur de cache !<br><small>"+e.error+"</small>");
 		if(e.type=='progress') showNotification("cache-download","Téléchargement : "+e.progress);//console.log("Cache download : "+e.progress);
-		//if(e.type=='finish' && e.updated) updateAvailable();
 	}
 	
 	
@@ -137,9 +114,6 @@ const App = (function()
 		{
 			let txt = "<p>Version : "+response.version;
 			txt += "<p>Cache size : "+(response.size ? (Math.round(response.size/1024)+" ko") : "unknown");
-			txt += "<p>Integrity : "+(response.integrity?greenDot:redDot);
-			//txt += "<p>Database : <br>"+response.database.map(x => x.path).join('<br>');
-			//txt += "<p>Cache : <br>"+response.cache.join('<br>');
 			get('status').innerHTML = txt;
 		});
 	}
@@ -148,15 +122,14 @@ const App = (function()
 		getVersion: () => VERSION,
 		init: init,
 		show: show,
+		install: install,
 		showNotification: showNotification
 	}
 	if(useSW)
 	{
 		API.workerUpdate = OfflineHandler.workerUpdate;
 		API.cacheUpdate = OfflineHandler.cacheUpdate;
-		API.cacheReset = OfflineHandler.cacheReset;
 		API.showOfflineStatus = showOfflineStatus;
-		API.fix = OfflineHandler.resetEverything;
 	}
 	return API;
 })();

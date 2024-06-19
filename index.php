@@ -1,5 +1,5 @@
 <!doctype html>
-<html<?php if(isset($_GET['appcache'])) echo ' manifest="offline.php?appcache"'; ?>>
+<html>
 <head>
 <meta charset="UTF-8">
 <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon"> 
@@ -21,12 +21,6 @@ html, body { font-family:sans-serif; width:100%; height:100%; padding:0; margin:
 	display: none;
 }
 </style>
-<?php
-	$hasServiceWorker = (!isset($_GET['appcache']) && !isset($_GET['nocache']));
-	if($hasServiceWorker) // add service worker script
-		echo '<script src="offline-handler.js"></script>'."\n";
-?>
-<script src="app-core.js"></script>
 </head>
 <body>
 
@@ -34,20 +28,11 @@ html, body { font-family:sans-serif; width:100%; height:100%; padding:0; margin:
 	<h1>Loading...</h1>
 </div>
 
-<div class="screen" id="oldbrowser">Please update your browser</div>
-
 <div class="screen" id="home">
 	<h1>Offline Test</h1>
 
-	<p>
-	<input type="button" value="update SW" onclick="App.workerUpdate()" />
-	<input type="button" value="update cache" onclick="App.cacheUpdate()" />
-	<input type="button" value="clear cache" onclick="App.cacheReset()" />
-	<input type="button" value="status" onclick="App.showOfflineStatus()" />
-	<input type="button" value="fix" onclick="App.fix()" />
+	<input type="button" id="installButton" value="Installer" onclick="App.install()" />
 
-	<div id="status">...</div>
-	
 	<p>
 		<img src="assets/earth1.jpg" style="max-height:20vh; max-width:20vw;" />
 		<img src="assets/earth2.jpg" style="max-height:20vh; max-width:20vw;" />
@@ -57,5 +42,11 @@ html, body { font-family:sans-serif; width:100%; height:100%; padding:0; margin:
 
 <div id="notifications"></div>
 
+<?php
+	$useServiceWorker = !isset($_GET['nocache']);
+	if($useServiceWorker) // add service worker script
+		echo '<script src="offline-handler.js"></script>'."\n";
+?>
+<script src="app-core.js"></script>
 </body>
 <html>

@@ -4,25 +4,10 @@ const OfflineHandler = (function()
 	const VERSION = "8";
 	const SW_FILENAME = 'offline-sw.js';
 	const CHANNEL_NAME = 'offline-sw';
-	let workerRunningStatus = "unknown"; // installing, installed, activating, activated, redundant, error
-	let workerUpdateStatus = "unknown"; // noupdate, updating, ready, error
-	let cacheStatus = "unknown"; // noupdate, updating, ready, error
-	
-	function get (id) { return document.getElementById(id); }
+	//let workerRunningStatus = "unknown"; // installing, installed, activating, activated, redundant, error
+	let workerUpdateStatus = "unknown";  // noupdate, updating, ready, error
 	
 	function fireEvent (type, data) { window.dispatchEvent(new CustomEvent(type,{detail:data})) };
-	
-	const getMissingBrowserFeatures = function ()
-	{
-		const checkList = ["serviceWorker","caches","BroadcastChannel", "indexedDB"];
-		let missing = [];
-		checkList.forEach( check =>
-		{
-			let ok = (check in window || check in navigator);
-			if(!ok) missing.push(check);
-		});
-		return missing;
-	}
 	
 	
 	const workerUpdateFound = function (reg)
@@ -55,23 +40,27 @@ const OfflineHandler = (function()
 				default: console.log("unknown message : "+event.data.type+" : "+event.data.value); 
 			}
 		});
-		// register SW
-		workerRunningStatus = "installing";
+	}
+
+
+	const workerInstall = async function ()
+	{
+		//workerRunningStatus = "installing";
 		try {
 			const reg = await navigator.serviceWorker.register(SW_FILENAME)
 			console.log('Service worker registered.', reg);
-			workerRunningStatus = "installed";
+			//workerRunningStatus = "installed";
 			reg.addEventListener('updatefound', () => { workerUpdateFound(reg); });
 		}
 		catch (error) { currentStatus = "failed"; throw new Error('Service worker registration failed : '+error); }
 	}
 	
 	
-	const sendMessageToSW = function (msg,)
+	const sendMessageToSW = function (msg, shouldHaveSW)
 	{
 		if(!navigator.serviceWorker.controller)
 		{
-			fireEvent("noController");
+			if(shouldHaveSW) fireEvent("noController");
 			return;
 		}
 		return new Promise(function(resolve, reject)
@@ -89,7 +78,7 @@ const OfflineHandler = (function()
 	
 	const workerUpdate = function ()
 	{
-		return navigator.serviceWorker.getRegistration().then(reg => reg.update());
+		return navigator.serviceWorker.getRegistration().then(reg => { if(reg) reg.update() });
 	}
 	
 	const askStatus = function (callback)
@@ -102,13 +91,10 @@ const OfflineHandler = (function()
 	
 	return {
 		getVersion: () => VERSION,
-		getMissingBrowserFeatures: getMissingBrowserFeatures,
 		init: init,
+		workerInstall: workerInstall,
 		workerUpdate: workerUpdate,
 		cacheUpdate: () => sendMessageToSW('cache-update'),
-		cacheReset: () => sendMessageToSW('reset'),
-		askStatus: askStatus,
-		resetEverything: () => sendMessageToSW('fix')
 	}
 
 })();
