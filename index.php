@@ -32,6 +32,7 @@ html, body { font-family:sans-serif; width:100%; height:100%; padding:0; margin:
 	<h1>Offline Test</h1>
 
 	<input type="button" id="installButton" value="Installer" onclick="App.install()" />
+	<input type="button" id="updateButton" value="Mise à jour" onclick="App.cacheUpdate()" />
 
 	<p>
 		<img src="assets/earth1.jpg" style="max-height:20vh; max-width:20vw;" />

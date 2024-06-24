@@ -4,7 +4,8 @@ const OfflineHandler = (function()
 	const VERSION = "8";
 	const SW_FILENAME = 'offline-sw.js';
 	const CHANNEL_NAME = 'offline-sw';
-	//let workerRunningStatus = "unknown"; // installing, installed, activating, activated, redundant, error
+	let workerStatus = "unknown";
+	let workerRunningStatus = "unknown"; // installing, installed, activating, activated, redundant, error
 	let workerUpdateStatus = "unknown";  // noupdate, updating, ready, error
 	
 	function fireEvent (type, data) { window.dispatchEvent(new CustomEvent(type,{detail:data})) };
@@ -33,13 +34,16 @@ const OfflineHandler = (function()
 			switch(event.data.type)
 			{
 				case "message" : console.log('Received', event.data.value); break;
-				case "installed" : fireEvent("workerInstalled"); break;
-				case "downloading" : fireEvent("cacheUpdate",{type:'progress', progress:event.data.value}); break;
-				case "updated" : fireEvent("cacheUpdate",{type:'finish', updated:event.data.value}); break;
-				case "error" : fireEvent("cacheUpdate",{type:'error', error:event.data.value}); break;
+				case "installed" : workerStatus="installed"; fireEvent("workerInstalled"); break;
+				case "downloading" : workerStatus="downloading"; fireEvent("cacheUpdate",{type:'progress', progress:event.data.value}); break;
+				case "updated" : workerStatus="installed"; fireEvent("cacheUpdate",{type:'finish', updated:event.data.value}); break;
+				case "error" : workerStatus="error"; fireEvent("cacheUpdate",{type:'error', error:event.data.value}); break;
 				default: console.log("unknown message : "+event.data.type+" : "+event.data.value); 
 			}
+			console.log("status : "+workerStatus);
 		});
+		console.log("asking");
+		askStatus(console.log);
 	}
 
 
@@ -80,7 +84,8 @@ const OfflineHandler = (function()
 	{
 		return navigator.serviceWorker.getRegistration().then(reg => { if(reg) reg.update() });
 	}
-	
+
+
 	const askStatus = function (callback)
 	{
 		let p = sendMessageToSW('status');
@@ -92,6 +97,7 @@ const OfflineHandler = (function()
 	return {
 		getVersion: () => VERSION,
 		init: init,
+		workerStatus: () => workerStatus,
 		workerInstall: workerInstall,
 		workerUpdate: workerUpdate,
 		cacheUpdate: () => sendMessageToSW('cache-update'),

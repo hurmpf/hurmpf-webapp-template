@@ -19,7 +19,6 @@ const MAINPAGE = "index.php";
 const sleep = function (ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
 
-
 //--------
 // EVENTS
 //--------
@@ -29,7 +28,6 @@ self.addEventListener("install", function(event)
 {
 	log("install new SW : "+VERSION);
 	broadcastMessage('installing');
-	event.waitUntil(cacheRemoveOld().then(cacheUpdate()));
 	log("installed SW");
 	self.skipWaiting();
 });
@@ -39,6 +37,7 @@ self.addEventListener("install", function(event)
 self.addEventListener("activate", function(event)
 {
 	log("activate SW "+VERSION);
+	event.waitUntil(cacheRemoveOld().then(cacheUpdate()));
 	self.clients.claim();
 });
 
@@ -153,7 +152,7 @@ async function cacheUpdate ()
 			await cache.add(new Request(file,{cache: "no-store", headers:{'Cache-control':'no-cache'}})).then(
 				async function() { broadcastMessage("downloading", Math.round(100*(i+1)/nb)+"%"); });
 		}
-		broadcastMessage("updated",nb>0);
+		setTimeout(() => broadcastMessage("updated",nb>0), 1000);
 		await cacheClean(true);
 		log("cache update successful");
 		return "OK";
