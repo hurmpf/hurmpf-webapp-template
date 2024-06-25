@@ -5,27 +5,10 @@ const OfflineHandler = (function()
 	const SW_FILENAME = 'offline-sw.js';
 	const CHANNEL_NAME = 'offline-sw';
 	let workerStatus = "unknown";
-	let workerRunningStatus = "unknown"; // installing, installed, activating, activated, redundant, error
-	let workerUpdateStatus = "unknown";  // noupdate, updating, ready, error
 	
 	function fireEvent (type, data) { window.dispatchEvent(new CustomEvent(type,{detail:data})) };
-	
-	
-	const workerUpdateFound = function (reg)
-	{
-		workerUpdateStatus = "updating";
-		let newWorker = reg.installing;
-		newWorker.addEventListener('statechange', () =>
-		{
-			if (newWorker.state==='installed' && navigator.serviceWorker.controller)
-			{
-				workerUpdateStatus = "ready";
-				fireEvent("workerInstalled");
-			}
-		});
-	}
-	
 
+	
 	const init = async function ()
 	{
 		// listen for broadcast messages
@@ -34,32 +17,30 @@ const OfflineHandler = (function()
 			switch(event.data.type)
 			{
 				case "message" : console.log('Received', event.data.value); break;
-				case "installed" : workerStatus="installed"; fireEvent("workerInstalled"); break;
+				case "installed" : workerStatus="ready"; fireEvent("installed"); break;
 				case "downloading" : workerStatus="downloading"; fireEvent("cacheUpdate",{type:'progress', progress:event.data.value}); break;
-				case "updated" : workerStatus="installed"; fireEvent("cacheUpdate",{type:'finish', updated:event.data.value}); break;
+				case "updated" : workerStatus="ready"; fireEvent("cacheUpdate",{type:'finish', updated:event.data.value}); break;
 				case "error" : workerStatus="error"; fireEvent("cacheUpdate",{type:'error', error:event.data.value}); break;
 				default: console.log("unknown message : "+event.data.type+" : "+event.data.value); 
 			}
-			console.log("status : "+workerStatus);
 		});
-		console.log("asking");
-		askStatus(console.log);
+		workerUpdate();
 	}
 
 
+	// when install button pressed
 	const workerInstall = async function ()
 	{
-		//workerRunningStatus = "installing";
 		try {
 			const reg = await navigator.serviceWorker.register(SW_FILENAME)
 			console.log('Service worker registered.', reg);
-			//workerRunningStatus = "installed";
-			reg.addEventListener('updatefound', () => { workerUpdateFound(reg); });
+			workerStatus = "ready";
 		}
 		catch (error) { currentStatus = "failed"; throw new Error('Service worker registration failed : '+error); }
 	}
 	
 	
+	// pour demander status ou lancer la mise à jour du cache
 	const sendMessageToSW = function (msg, shouldHaveSW)
 	{
 		if(!navigator.serviceWorker.controller)
@@ -89,7 +70,9 @@ const OfflineHandler = (function()
 	const askStatus = function (callback)
 	{
 		let p = sendMessageToSW('status');
-		if(callback) p.then( callback );
+		if(callback)
+			if(p) p.then( callback );
+			else callback();
 		return p;
 	}
 	
@@ -99,7 +82,7 @@ const OfflineHandler = (function()
 		init: init,
 		workerStatus: () => workerStatus,
 		workerInstall: workerInstall,
-		workerUpdate: workerUpdate,
+		//workerAskStatus: askStatus,
 		cacheUpdate: () => sendMessageToSW('cache-update'),
 	}
 

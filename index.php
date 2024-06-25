@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon"> 
 <style>
-#status { margin: 1em 0; padding: 1em; border: 1px solid black; display: inline-block; }
 html, body { font-family:sans-serif; width:100%; height:100%; padding:0; margin:0; }
 .screen { width:calc(100%-1em); height:calc(100%-1em); padding:1em; display: none; }
 #loading { display: block; }
@@ -20,6 +19,7 @@ html, body { font-family:sans-serif; width:100%; height:100%; padding:0; margin:
 	opacity: 0;
 	display: none;
 }
+#SWbuttons div { display: inline-block; border: 1px solid black; font-size: small; padding: 0.2em 0.4em; }
 </style>
 </head>
 <body>
@@ -31,8 +31,11 @@ html, body { font-family:sans-serif; width:100%; height:100%; padding:0; margin:
 <div class="screen" id="home">
 	<h1>Offline Test</h1>
 
-	<input type="button" id="installButton" value="Installer" onclick="App.install()" />
-	<input type="button" id="updateButton" value="Mise à jour" onclick="App.cacheUpdate()" />
+	<div id="SWbuttons">
+		<input type="button" id="SWinstallButton" value="Installer" onclick="App.install()" />
+		<div id="SWinstalling">⏳ Installation...<span id="SWinstallPrc"></span></div>
+		<div id="SWready">✅ Installé</div>
+	</div>
 
 	<p>
 		<img src="assets/earth1.jpg" style="max-height:20vh; max-width:20vw;" />

@@ -27,8 +27,6 @@ const sleep = function (ms) { return new Promise(resolve => setTimeout(resolve, 
 self.addEventListener("install", function(event)
 {
 	log("install new SW : "+VERSION);
-	broadcastMessage('installing');
-	log("installed SW");
 	self.skipWaiting();
 });
 
