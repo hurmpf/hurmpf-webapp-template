@@ -5,7 +5,7 @@ const App = (function()
 	const orangeDot = '<span style="color:orange">&#x2b24;</span>'; //"&#128992;";
 	const greenDot = '<span style="color:green">&#x2b24;</span>';   //"&#128994;";
 	
-	let _currentScreen = "loading";
+	let _currentScreen = "loading"; 
 
 	const get = function (id) { return document.getElementById(id); }
 	let useSW = (location.search.indexOf("nocache")==-1)
@@ -52,9 +52,11 @@ const App = (function()
 	{
 		const reg = navigator.serviceWorker.controller;
 		const downloading = (OfflineHandler && OfflineHandler.workerStatus()=="downloading")
+		const updated = (OfflineHandler && OfflineHandler.workerStatus()=="updated")
 		get('SWinstallButton').style.display = !reg ? "inline-block" : "none";
 		get('SWinstalling').style.display = (reg && downloading) ? "inline-block" : "none";
 		get('SWready').style.display = (reg && !downloading) ? "inline-block" : "none";
+		get('SWrestartButton').style.display = updated ? "inline-block" : "none";
 	}
 
 
@@ -75,6 +77,7 @@ const App = (function()
 		const e = event.detail;
 		if(e.type=='error') console.log("Erreur de cache : "+e.error);
 		if(e.type=='progress') console.log("Téléchargement : "+e.progress);
+		if(e.type=='updated') console.log("Mise à jour prête");
 		updateSWbuttons();
 	}
 

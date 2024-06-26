@@ -29,12 +29,13 @@ html, body { font-family:sans-serif; width:100%; height:100%; padding:0; margin:
 </div>
 
 <div class="screen" id="home">
-	<h1>Offline Test</h1>
+	<h1>Offline Test A</h1>
 
 	<div id="SWbuttons">
 		<input type="button" id="SWinstallButton" value="Installer" onclick="App.install()" />
 		<div id="SWinstalling">⏳ Installation...<span id="SWinstallPrc"></span></div>
 		<div id="SWready">✅ Installé</div>
+		<input type="button" id="SWrestartButton" value="Mise à jour disponible !" onclick="location.reload()" />
 	</div>
 
 	<p>
