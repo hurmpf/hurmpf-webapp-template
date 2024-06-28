@@ -1,0 +1,16 @@
+{
+    "name": "Offline Test",
+    "short_name": "Offline",
+    "description": "Test des fonctionnalités offline",
+    "icons": [
+      {
+        "src": "icon.png",
+        "sizes": "148x148",
+        "type": "image/png"
+      }
+    ],
+    "start_url": "/lab/offline/index.php",
+    "display": "fullscreen",
+    "theme_color": "#FF8000",
+    "background_color": "#FF8000"
+  }

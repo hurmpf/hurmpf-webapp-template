@@ -8,7 +8,7 @@ const App = (function()
 	let _currentScreen = "loading"; 
 
 	const get = function (id) { return document.getElementById(id); }
-	let useSW = (location.search.indexOf("nocache")==-1)
+	const useSW = (location.search.indexOf("nocache")==-1)
 			&& ('serviceWorker' in window || 'serviceWorker' in navigator)
 			&& ('caches' in window || 'caches' in navigator);
 	
@@ -50,7 +50,7 @@ const App = (function()
 
 	const updateSWbuttons = function ()
 	{
-		const reg = navigator.serviceWorker.controller;
+		const reg = useSW && navigator.serviceWorker.controller;
 		const downloading = (OfflineHandler && OfflineHandler.workerStatus()=="downloading")
 		const updated = (OfflineHandler && OfflineHandler.workerStatus()=="updated")
 		get('SWinstallButton').style.display = !reg ? "inline-block" : "none";

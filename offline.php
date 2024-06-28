@@ -1,4 +1,4 @@
- <?php
+<?php
 /*
 	OFFLINE CACHING
 */
@@ -42,15 +42,14 @@ $manifest = array(
 	'files' => $files
 );
 
-
 // start output
 header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
 header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // past date to force refresh
-header("Content-Type: text/javascript;charset=utf-8");
-echo "\nconst manifest = ".json_encode($manifest, JSON_UNESCAPED_SLASHES);
-
-?>
-
+//header("Service-Worker-Allowed: https://cmrr-nice.fr/lab/offline/");
+//header("Content-Type: application/javascript; charset=UTF-8");
+header('Content-Type: application/javascript');
+echo "\nconst manifest = ".json_encode($manifest, JSON_UNESCAPED_SLASHES).";\n";
+echo <<<EOT
 const VERSION = 1;                             // version, append in cache name and used for database
 const CACHEPREFIX = 'test-cache-';             // used to detect the caches of this app (don't delete cache of other apps)
 const CACHENAME = CACHEPREFIX+VERSION;         // cache name for offline access
@@ -208,6 +207,8 @@ async function cacheClean (verbose)
 	}
 	catch (error)
 	{
-		warn("Unable to clean cache : "+error+"\n"+error.stack);
+		warn("Unable to clean cache : "+error);
 	}
 }
+EOT;
+?>

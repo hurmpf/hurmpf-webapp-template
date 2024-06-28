@@ -2,7 +2,19 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon"> 
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=0">
+<meta charset="UTF-8">
+<meta http-equiv="cache-control" content="max-age=0" />
+<meta http-equiv="cache-control" content="no-cache" />
+<meta http-equiv="expires" content="0" />
+<meta http-equiv="expires" content="Tue, 01 Jan 1980 1:00:00 GMT" />
+<meta http-equiv="pragma" content="no-cache" />
+<link rel="manifest" href="offline.webmanifest" />
+<link rel="icon" href="icon.png" />
+<link rel="apple-touch-icon" href="icon.png" />
+<link rel="shortcut icon" href="icon.png" />
 <style>
 html, body { font-family:sans-serif; width:100%; height:100%; padding:0; margin:0; }
 .screen { width:calc(100%-1em); height:calc(100%-1em); padding:1em; display: none; }
@@ -21,6 +33,7 @@ html, body { font-family:sans-serif; width:100%; height:100%; padding:0; margin:
 }
 #SWbuttons div { display: inline-block; border: 1px solid black; font-size: small; padding: 0.2em 0.4em; }
 </style>
+<title>Offline Test</title>
 </head>
 <body>
 
@@ -29,7 +42,7 @@ html, body { font-family:sans-serif; width:100%; height:100%; padding:0; margin:
 </div>
 
 <div class="screen" id="home">
-	<h1>Offline Test A</h1>
+	<h1>Offline Test</h1>
 
 	<div id="SWbuttons">
 		<input type="button" id="SWinstallButton" value="Installer" onclick="App.install()" />
