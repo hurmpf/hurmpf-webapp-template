@@ -49,8 +49,8 @@ header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // past date to force refresh
 //header("Content-Type: application/javascript; charset=UTF-8");
 header('Content-Type: application/javascript');
 echo "\nconst manifest = ".json_encode($manifest, JSON_UNESCAPED_SLASHES).";\n";
+echo "\nconst VERSION = '".$maxDate."';\n";    // version, append in cache name and used for database
 echo <<<EOT
-const VERSION = 1;                             // version, append in cache name and used for database
 const CACHEPREFIX = 'test-cache-';             // used to detect the caches of this app (don't delete cache of other apps)
 const CACHENAME = CACHEPREFIX+VERSION;         // cache name for offline access
 const CHANNELNAME = 'offline-sw';              // comminucation channel between service worker and page script (should not be changed)
