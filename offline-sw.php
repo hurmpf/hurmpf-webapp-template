@@ -2,7 +2,7 @@
 /*
 	OFFLINE CACHING
 */
-$exclude = array("offline.php","git","LICENSE","README.md");
+$exclude = array("offline-sw.php","git","LICENSE","README.md");
 $files = array();
 $size = 0;
 $maxDate = 0;

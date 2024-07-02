@@ -2,7 +2,7 @@
 const OfflineHandler = (function()
 {
 	const VERSION = "8";
-	const SW_FILENAME = 'offline.php';
+	const SW_FILENAME = 'offline-sw.php';
 	const CHANNEL_NAME = 'offline-sw';
 	let workerStatus = "unknown";
 	const useSW = (location.search.indexOf("nocache")==-1) && ('serviceWorker' in window || 'serviceWorker' in navigator) && ('caches' in window || 'caches' in navigator);
